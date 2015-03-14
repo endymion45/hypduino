@@ -29,21 +29,25 @@ WebServer webserver(PREFIX, 80);
 #define LD_PIN 6
 #define RE1_PIN 3
 #define RE2_PIN 5
-
+#define lightPin 0  //define a pin for Photo resistor
+#define UP_FEN A5
+#define ST_FEN A4
+#define DN_FEN A3
 // Data wire is plugged into port 2 on the Arduino
 #define ONE_WIRE_BUS 2
-
+#define TEMPERATURE_PRECISION 12
 // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 OneWire oneWire(ONE_WIRE_BUS);
 
 // Pass our oneWire reference to Dallas Temperature. 
 DallasTemperature sensors(&oneWire);
-
+DeviceAddress therm1, therm2, therm3;
 /* This is the number of milliseconds for pulse delay */
 int ButtonDelay = 100;
 int volet=0;
 int re1=0;
 int re2=0;
+int fen=0;
 /* store the HTML in program memory using the P macro */
 
   
@@ -100,31 +104,54 @@ Serial.println("demande de la page cmd.html");
     }
 switch (id){
   case '1':
-  server.print(sensors.getTempCByIndex(0));
+  if(strcmp(cmd,"temp1") == 0)
+      {
+        sensors.requestTemperatures();
+        server.print(sensors.getTempC(therm1));
+  //server.print(sensors.getTempCByIndex(0));
+      }
+   else if (strcmp(cmd,"temp2") == 0)
+      {
+        sensors.requestTemperatures();
+        server.print(sensors.getTempC(therm2));
+      }
+    else if (strcmp(cmd,"temp3") == 0)
+      {
+        sensors.requestTemperatures();
+       server.print(sensors.getTempC(therm3));
+      }
   break;
   case '2':
   
     if(strcmp(cmd,"up") == 0)
      {
        ButtonAction(UP_PIN);
+       fen=1;
         Serial.println(cmd);
        Serial.println(strcmp(cmd,"up"));
      }
     else if(strcmp(cmd,"stop")== 0)
       {
         ButtonAction(ST_PIN);
+        fen=0;
          Serial.println(cmd);
         Serial.println(strcmp(cmd,"stop"));
       }
     else if (strcmp(cmd,"down") == 0)
       {
         ButtonAction(DN_PIN);
+        fen=0;
         Serial.println(cmd);
         Serial.println(strcmp(cmd,"down"));
+      }
+      else if (strcmp(cmd,"etat") == 0)
+      {
+        server.print(fen);
       }
      else
        {
          ButtonAction(ST_PIN);
+         fen=0;
          Serial.println("stop defaut");
        }
   break;
@@ -179,6 +206,39 @@ switch (id){
                 }
             
           }
+   break;
+   case '4':
+    server.print(analogRead(lightPin));
+    digitalWrite(LD_PIN, HIGH);
+    delay(ButtonDelay);
+    digitalWrite(LD_PIN, LOW);
+    break;
+    
+    case '5':
+    if(strcmp(cmd,"up") == 0)
+     {
+       ButtonAction(UP_FEN);
+        Serial.println(cmd);
+       Serial.println(strcmp(cmd,"up"));
+     }
+    else if(strcmp(cmd,"stop")== 0)
+      {
+        ButtonAction(ST_FEN);
+         Serial.println(cmd);
+        Serial.println(strcmp(cmd,"stop"));
+      }
+    else if (strcmp(cmd,"down") == 0)
+      {
+        ButtonAction(DN_FEN);
+        Serial.println(cmd);
+        Serial.println(strcmp(cmd,"down"));
+      }
+     else
+       {
+         ButtonAction(ST_FEN);
+         Serial.println("stop defaut");
+       }
+  break;
   }
 
 }
@@ -191,6 +251,9 @@ void setup()
   pinMode(UP_PIN, OUTPUT);
   pinMode(ST_PIN, OUTPUT);
   pinMode(DN_PIN, OUTPUT);
+  pinMode(UP_FEN, OUTPUT);
+  pinMode(ST_FEN, OUTPUT);
+  pinMode(DN_FEN, OUTPUT);
   pinMode(LD_PIN, OUTPUT);
   pinMode(RE1_PIN, OUTPUT);
   pinMode(RE2_PIN, OUTPUT);
@@ -207,7 +270,12 @@ digitalWrite(RE2_PIN, HIGH);
   // print your local IP address:
   Serial.print("Le DHCP a attribué l'adresse ip suivante: ");
   Serial.println(Ethernet.localIP());
- 
+    sensors.getAddress(therm1, 0);
+    sensors.getAddress(therm2, 1);
+    sensors.getAddress(therm3, 2);
+   sensors.setResolution(therm1, TEMPERATURE_PRECISION);
+   sensors.setResolution(therm2, TEMPERATURE_PRECISION);
+   sensors.setResolution(therm3, TEMPERATURE_PRECISION);
   /*This command  is called if you try to load /raw.html */
   webserver.addCommand("cmd.html", &parsedCmd);
   /* start the server to wait for connections */
