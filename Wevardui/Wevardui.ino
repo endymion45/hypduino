@@ -14,6 +14,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+char server1[] = "192.168.1.137";
 /* IP STACK */
 // Enter here the MAC adress from the Arduino Ethernet or Ethernet shield sticker.
 static uint8_t mac[] = { 0x90, 0xA2, 0xDA, 0x00, 0x5C, 0x94 };
@@ -33,8 +34,9 @@ WebServer webserver(PREFIX, 80);
 #define UP_FEN A5
 #define ST_FEN A4
 #define DN_FEN A3
-// Data wire is plugged into port 2 on the Arduino
-#define ONE_WIRE_BUS 2
+#define detect 2
+// Data wire is plugged into port A1 on the Arduino
+#define ONE_WIRE_BUS A1
 #define TEMPERATURE_PRECISION 12
 // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 OneWire oneWire(ONE_WIRE_BUS);
@@ -44,10 +46,14 @@ DallasTemperature sensors(&oneWire);
 DeviceAddress therm1, therm2, therm3;
 /* This is the number of milliseconds for pulse delay */
 int ButtonDelay = 100;
+unsigned long lastConnectionTime = 0;
+const unsigned long postingInterval = 60*1000;
 int volet=0;
 int re1=0;
 int re2=0;
 int fen=0;
+int etatDetect;
+int etat=0;
 /* store the HTML in program memory using the P macro */
 
   
@@ -239,6 +245,12 @@ switch (id){
          Serial.println("stop defaut");
        }
   break;
+  case '6':
+    server.print(etat);
+    digitalWrite(LD_PIN, HIGH);
+    delay(ButtonDelay);
+    digitalWrite(LD_PIN, LOW);
+    break;
   }
 
 }
@@ -248,6 +260,7 @@ void setup()
   //initialisation de la lib pour le ds18b20
   sensors.begin();
   // set the PIN's to output
+  pinMode(detect, INPUT);
   pinMode(UP_PIN, OUTPUT);
   pinMode(ST_PIN, OUTPUT);
   pinMode(DN_PIN, OUTPUT);
@@ -281,7 +294,6 @@ digitalWrite(RE2_PIN, HIGH);
   /* start the server to wait for connections */
   Serial.println("Démarrage du serveur WEB");
   webserver.begin();
-  
   /* Signal startup OK  */
   for (int i=0; i<5; i++) {
     digitalWrite(LD_PIN, HIGH);
@@ -304,7 +316,17 @@ void loop()
 {
  char buff[64];
   int len = 64;
-
+etatDetect = digitalRead(detect);
+if(etatDetect == LOW && (millis() - lastConnectionTime > postingInterval)){
+  Serial.println("Je suis à l'etat bas");
+  etat=0;
+ lastConnectionTime = millis();
+}
+if(etatDetect == HIGH)
+  {
+    Serial.println("Je suis à l'etat haut");
+    etat=1;
+  }
   /* process incoming connections one at a time forever */
   webserver.processConnection(buff, &len);
 }
