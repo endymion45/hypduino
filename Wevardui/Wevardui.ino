@@ -8,13 +8,14 @@
 #include "avr/pgmspace.h" // new include
 #include "Ethernet.h"
 #include "WebServer.h"
+#include <HttpClient.h>
+#include <EthernetClient.h>
 /*
   Include lié au ds18b20
 */
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-char server1[] = "192.168.1.137";
 /* IP STACK */
 // Enter here the MAC adress from the Arduino Ethernet or Ethernet shield sticker.
 static uint8_t mac[] = { 0x90, 0xA2, 0xDA, 0x00, 0x5C, 0x94 };
@@ -22,7 +23,9 @@ IPAddress ip(192,168,1,47);
 /* WEBROOT */
 #define PREFIX ""
 WebServer webserver(PREFIX, 80);
-
+const char kHostname[] = "192.168.1.137";
+const char kPath[] = "/jeedom/core/api/jeeApi.php?apikey=im85tbkyxnf8crl93nar&type=cmd&id=193";
+const char kPath2[] = "/jeedom/core/api/jeeApi.php?apikey=im85tbkyxnf8crl93nar&type=cmd&id=194";
 /* IO PIN's Used */
 #define UP_PIN 9
 #define ST_PIN 8
@@ -46,14 +49,14 @@ DallasTemperature sensors(&oneWire);
 DeviceAddress therm1, therm2, therm3;
 /* This is the number of milliseconds for pulse delay */
 int ButtonDelay = 100;
-unsigned long lastConnectionTime = 0;
-const unsigned long postingInterval = 60*1000;
+unsigned long lastVerifTime = 0;
+const unsigned long verifInterval = 10000;
+
 int volet=0;
 int re1=0;
 int re2=0;
 int fen=0;
 int etatDetect;
-int etat=0;
 /* store the HTML in program memory using the P macro */
 
   
@@ -245,12 +248,6 @@ switch (id){
          Serial.println("stop defaut");
        }
   break;
-  case '6':
-    server.print(etat);
-    digitalWrite(LD_PIN, HIGH);
-    delay(ButtonDelay);
-    digitalWrite(LD_PIN, LOW);
-    break;
   }
 
 }
@@ -316,16 +313,18 @@ void loop()
 {
  char buff[64];
   int len = 64;
+int err =0;
+
 etatDetect = digitalRead(detect);
-if(etatDetect == LOW && (millis() - lastConnectionTime > postingInterval)){
-  Serial.println("Je suis à l'etat bas");
-  etat=0;
- lastConnectionTime = millis();
-}
-if(etatDetect == HIGH)
+if(etatDetect == HIGH && (millis()- lastVerifTime > verifInterval))
   {
     Serial.println("Je suis à l'etat haut");
-    etat=1;
+    //client.get("http://192.168.1.137/jeedom/core/api/jeeApi.php?apikey=im85tbkyxnf8crl93nar&type=cmd&id=193");
+    EthernetClient c;
+    HttpClient http(c);
+    err = http.get(kHostname, kPath);
+    http.stop();
+    lastVerifTime = millis();
   }
   /* process incoming connections one at a time forever */
   webserver.processConnection(buff, &len);
