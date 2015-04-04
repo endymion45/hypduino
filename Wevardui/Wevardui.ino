@@ -49,14 +49,13 @@ DallasTemperature sensors(&oneWire);
 DeviceAddress therm1, therm2, therm3;
 /* This is the number of milliseconds for pulse delay */
 int ButtonDelay = 100;
-unsigned long lastVerifTime = 0;
-const unsigned long verifInterval = 10000;
 
 int volet=0;
 int re1=0;
 int re2=0;
 int fen=0;
-int etatDetect;
+int etatDetect = 0;
+int dernieretat = 0;
 /* store the HTML in program memory using the P macro */
 
   
@@ -316,16 +315,19 @@ void loop()
 int err =0;
 
 etatDetect = digitalRead(detect);
-if(etatDetect == HIGH && (millis()- lastVerifTime > verifInterval))
+
+if(etatDetect != dernieretat){
+if(etatDetect == LOW)
   {
-    Serial.println("Je suis à l'etat haut");
+    Serial.println("Je suis à l'etat bas");
     //client.get("http://192.168.1.137/jeedom/core/api/jeeApi.php?apikey=im85tbkyxnf8crl93nar&type=cmd&id=193");
     EthernetClient c;
     HttpClient http(c);
     err = http.get(kHostname, kPath);
     http.stop();
-    lastVerifTime = millis();
   }
+  dernieretat = etatDetect; 
+}
   /* process incoming connections one at a time forever */
   webserver.processConnection(buff, &len);
 }
