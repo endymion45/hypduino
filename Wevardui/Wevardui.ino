@@ -23,9 +23,9 @@ IPAddress ip(192,168,1,47);
 /* WEBROOT */
 #define PREFIX ""
 WebServer webserver(PREFIX, 80);
-const char kHostname[] = "192.168.1.137";
-const char kPath[] = "/jeedom/core/api/jeeApi.php?apikey=im85tbkyxnf8crl93nar&type=cmd&id=193";
-const char kPath2[] = "/jeedom/core/api/jeeApi.php?apikey=im85tbkyxnf8crl93nar&type=cmd&id=194";
+const char kHostname[] = "salecroix.fr";
+const char kPath[] = "/core/api/jeeApi.php?apikey=YQFCKcxGJ52BSrHCc73U&type=cmd&id=809"
+const char kPath2[] = "/core/api/jeeApi.php?apikey=YQFCKcxGJ52BSrHCc73U&type=cmd&id=811";
 /* IO PIN's Used */
 #define UP_PIN 9
 #define ST_PIN 8
